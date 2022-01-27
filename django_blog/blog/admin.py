@@ -1,0 +1,72 @@
+from django.contrib import admin
+from django import forms
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
+from django.utils.safestring import mark_safe
+
+from .models import *
+
+
+class PostAdminForm(forms.ModelForm):
+    content = forms.CharField(widget=CKEditorUploadingWidget())
+
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+
+class PostAdmin(admin.ModelAdmin):
+    prepopulated_fields = {'slug': ('title',)}
+    form = PostAdminForm
+    save_as = True
+    save_on_top = True
+    list_display = ('id', 'title', 'slug', 'author', 'category', 'created_at', 'get_photo', 'views')
+    list_display_links = ('id', 'title',)
+    search_fields = ('title',)
+    list_filter = ('category', 'tags',)
+    readonly_fields = ('views', 'created_at', 'get_photo',)
+    fields = ('title', 'slug', 'author', 'category', 'tags', 'content', 'get_photo', 'views', 'created_at')
+
+    def get_photo(self, obj):
+        if obj.photo:
+            return mark_safe(f'<img src="{obj.photo.url}" width="50">')
+        else:
+            return '-'
+
+    get_photo.short_description = 'Фото'
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    prepopulated_fields = {'slug': ('title',)}
+
+
+class TagAdmin(admin.ModelAdmin):
+    prepopulated_fields = {'slug': ('title',)}
+    list_display = ('title',)
+
+
+class ZastavkaAdmin(admin.ModelAdmin):
+    list_display = ('get_foto', 'nazvanie', 'opisanie')
+    # list_display = ('foto', 'nazvanie', 'opisanie')
+    list_display_links = ('nazvanie',)
+
+    def get_foto(self, obj):
+        if obj.foto:
+            return mark_safe(f'<img src="{obj.foto.url}" width="50">')
+        else:
+            return '-'
+
+
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email')
+
+
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'text')
+
+
+admin.site.register(Category, CategoryAdmin)
+admin.site.register(Tag, TagAdmin)
+admin.site.register(Post, PostAdmin)
+admin.site.register(Zastavka, ZastavkaAdmin)
+admin.site.register(Review, ReviewAdmin)
